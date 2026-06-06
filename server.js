@@ -59,11 +59,14 @@ function normalizeAircraft(raw, center) {
   const altitude = normalizeAltitude(raw.alt_baro ?? raw.alt_geom ?? raw.altitude_baro ?? raw.altitude);
   const verticalRate = Number(raw.baro_rate ?? raw.geom_rate ?? raw.vertical_rate);
   const flight = String(raw.flight ?? raw.callsign ?? raw.ident ?? "").trim();
+  const operator = String(raw.ownOp ?? raw.operator ?? raw.airline ?? "").trim();
   const distanceMiles = haversineMiles(center, { lat, lon });
 
   return {
     hex: String(raw.hex ?? raw.icao24 ?? raw.icao ?? raw.id ?? `${lat},${lon}`),
     flight: flight || "Unknown",
+    displayName: resolveFlightName(flight, operator),
+    operator,
     registration: raw.r ?? raw.registration ?? "",
     type: raw.t ?? raw.type ?? raw.aircraft_type ?? "",
     category: raw.category ?? "",
@@ -82,6 +85,43 @@ function normalizeAircraft(raw, center) {
     isOverhead: distanceMiles <= 0.2,
     raw,
   };
+}
+
+function resolveFlightName(flight, operator) {
+  const cleanFlight = String(flight || "").trim();
+  if (!cleanFlight) return operator || "Unknown flight";
+
+  const match = cleanFlight.match(/^([A-Z]{2,3})(\d+[A-Z]?)$/i);
+  if (!match) return operator || cleanFlight;
+
+  const prefix = match[1].toUpperCase();
+  const number = match[2];
+  const airlineNames = {
+    AAL: "American Airlines",
+    ACA: "Air Canada",
+    AFR: "Air France",
+    ASA: "Alaska Airlines",
+    BAW: "British Airways",
+    DAL: "Delta Air Lines",
+    DLH: "Lufthansa",
+    EJA: "NetJets",
+    FFT: "Frontier Airlines",
+    FDX: "FedEx",
+    JBU: "JetBlue",
+    KLM: "KLM",
+    QFA: "Qantas",
+    ROU: "Air Canada Rouge",
+    SKW: "SkyWest",
+    SWA: "Southwest Airlines",
+    UAE: "Emirates",
+    UAL: "United Airlines",
+    UPS: "UPS",
+    VOI: "Volaris",
+    WJA: "WestJet",
+  };
+
+  const airline = airlineNames[prefix] || operator;
+  return airline ? `${airline} ${number}` : cleanFlight;
 }
 
 function makeDemoAircraft(center, radiusMiles) {
