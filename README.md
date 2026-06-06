@@ -4,7 +4,7 @@ A local web app that shows aircraft inside a radius around your home coordinates
 
 ## Live Site
 
-GitHub Pages deploys from the `public` folder:
+GitHub Pages is published from the `gh-pages` branch:
 
 ```text
 https://shahet07.github.io/homeflight/
